@@ -1,0 +1,25 @@
+{
+  "format": "logoppi_example_data_v1",
+  "files": {
+    "proteins.fasta": {
+      "path": "proteins.fasta",
+      "sha256": "11dd50b3bcb27f2d49d7e88c260e88abc4f6d18302d1a838d04a37efec14640a"
+    },
+    "train.csv": {
+      "path": "train.csv",
+      "sha256": "c421b2f8970b8678e3860df290ee71687588ecdd79b0656f216ab91f3513c61e"
+    },
+    "validation_selection.csv": {
+      "path": "validation_selection.csv",
+      "sha256": "b8839aec000b2778dc2b40090af4f0204a1bac2c8a716d2036a540319c0caf6a"
+    },
+    "validation_calibration.csv": {
+      "path": "validation_calibration.csv",
+      "sha256": "bb3b9fd365a01ec822a3ad455d445c8194c9f06358f9697d3d3c2c83db4e1ffa"
+    },
+    "test.csv": {
+      "path": "test.csv",
+      "sha256": "da8d7de0ed0b5dc58b6d2efac97d64780cab39603db1799ab747f37de07d98fe"
+    }
+  }
+}

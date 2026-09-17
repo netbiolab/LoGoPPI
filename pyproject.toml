@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "logoppi"
+version = "2.0.0"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "pandas",
+  "pyyaml",
+  "scikit-learn",
+  "scipy",
+  "safetensors",
+  "huggingface_hub>=0.27",
+  "torch>=2.1",
+  "tqdm",
+  "transformers>=4.45,<5",
+]
+
+[project.optional-dependencies]
+training = ["wandb"]
+
+[tool.setuptools]
+py-modules = ["inference"]
+
+[tool.setuptools.packages.find]
+include = ["logobert*", "scripts*", "utils*"]

@@ -1,0 +1,35 @@
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# env
+.venv/
+venv/
+env/
+conda/
+
+# outputs
+output/
+outputs/
+checkpoints/
+checkpoint/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+data/
+runs/
+.pytest_cache/
+.ruff_cache/
+build/
+*.egg-info/
+
+# wandb
+wandb/
+.wandb/
+
+# logs
+*.log
+train_log.csv

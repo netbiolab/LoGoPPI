@@ -1,0 +1,8 @@
+model_format: x-species
+paths:
+  fasta: proteins.fasta
+  test_csv: test.csv
+postprocess:
+  embedding_batch_size: 4
+  global_batch_size: 4096
+  maxsim_pair_batch_size: 2

@@ -1,0 +1,65 @@
+model_format: x-species
+
+paths:
+  fasta: proteins.fasta
+  train_csv: train.csv
+  validation_selection_csv: validation_selection.csv
+  validation_calibration_csv: validation_calibration.csv
+  test_csv: test.csv
+  data_manifest: data_manifest.json
+
+model:
+  base_model_name: facebook/esm2_t33_650M_UR50D
+  base_model_revision: 08e4846e537177426273712802403f7ba8261b6c
+  projection_dim: 512
+  global_hidden_dim: 512
+  projection_dropout: 0.1
+  classifier_dropout: 0.1
+  max_residues: 800
+  exclude_special_tokens: true
+  global_symmetry: mean_ordered_logits
+  loss_definition: bce_on_mean_ordered_logits
+
+training:
+  batch_size_per_device: 2
+  gradient_accumulation_steps: 1
+  target_effective_batch: 2
+  max_epochs: 1
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  gradient_clip: 1.0
+  pos_weight: 1.0
+  early_stopping_patience: 2
+  seed: 42
+  sampler_seed: 0
+  num_workers: 0
+  pin_memory: true
+  prefetch_factor: 2
+  checkpoint_every_updates: 2
+  save_every_epoch: true
+  gradient_checkpointing: true
+
+postprocess:
+  embedding_batch_size: 4
+  global_batch_size: 4096
+  maxsim_pair_batch_size: 2
+  cache_dtype: float16
+
+runtime:
+  visible_gpus: 0
+  expected_world_size: 1
+  expected_gpu_name: ''
+  requested_precision: bf16
+  allow_fp16_fallback: true
+  attention: eager
+  trust_remote_code: false
+  local_files_only: false
+
+wandb:
+  enabled: false
+  mode: online
+  project: logoppi
+  group: example
+  job_type: example-training
+  log_every_updates: 2

@@ -1,0 +1,5 @@
+query,text,label
+protein_01,protein_03,1
+protein_02,protein_04,0
+protein_05,protein_07,1
+protein_06,protein_08,0

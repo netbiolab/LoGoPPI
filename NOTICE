@@ -1,0 +1,8 @@
+LoGoPPI
+Copyright (c) Network Biology Lab contributors.
+
+This repository is released under the Apache License 2.0 license (see LICENSE).
+The previous public LoGoBERT-PPI repository acknowledged batching utilities
+adapted from PLM-interact, MIT License, Dan Liu (2024). That attribution is
+retained here for continuity. Model and data cards describe the separate
+sources and provenance of released assets.
