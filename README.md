@@ -30,13 +30,15 @@ conda activate logoppi
 ```
 
 The provided environment targets Linux with an NVIDIA GPU and CUDA-enabled
-PyTorch. An NVIDIA driver must already be installed on the system.
+PyTorch. An NVIDIA driver must already be installed on the system. Run the
+commands below after activating the `logoppi` environment.
 
 ## Model and data download
 
 For inference, download a model without its training and evaluation data:
 
-```python
+```bash
+python - <<'PY'
 from huggingface_hub import snapshot_download
 
 snapshot_download(
@@ -45,6 +47,7 @@ snapshot_download(
     ignore_patterns=["data/*"],
     local_dir="models/cross_species",
 )
+PY
 ```
 
 Use `netbiolab/LoGoPPI-Bernett` and `models/bernett` for the Bernett model.
@@ -52,7 +55,8 @@ Use `netbiolab/LoGoPPI-Bernett` and `models/bernett` for the Bernett model.
 To run training or testing, download the matching dataset into the repository
 root. Choose one of the following calls:
 
-```python
+```bash
+python - <<'PY'
 from huggingface_hub import snapshot_download
 
 snapshot_download(
@@ -69,6 +73,7 @@ snapshot_download(
     allow_patterns=["data/*"],
     local_dir=".",
 )
+PY
 ```
 
 ## Input format
