@@ -148,8 +148,9 @@ python inference.py \
 
 ## Training
 
-Cross-species and Bernett use the same training script. Their data paths and
-training settings are defined in separate configuration files.
+Cross-species and Bernett use the same training script. 
+Dataset paths and training parameters, including batch size, learning rate, number of epochs, random seed, GPU settings, and optional W&B logging, 
+can be configured separately in configs/cross_species.yaml and configs/bernett.yaml.
 
 ```bash
 python -m scripts.training \
