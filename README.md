@@ -239,14 +239,6 @@ To evaluate another released Cross-species dataset, change `fasta` and
 `test_csv` in `configs/test/cross_species.yaml` to the matching files under
 `data/test/`.
 
-
-
-
-## Acknowledgements
-
-Parts of the batching utilities were adapted from PLM-interact (MIT License,
-Dan Liu, 2024). See [NOTICE](NOTICE) for details.
-
 ## License
 
 LoGoPPI is released under the [Apache License 2.0](LICENSE).
