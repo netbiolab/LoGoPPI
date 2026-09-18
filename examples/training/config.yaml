@@ -5,7 +5,6 @@ paths:
   train_csv: train.csv
   validation_selection_csv: validation_selection.csv
   validation_calibration_csv: validation_calibration.csv
-  data_manifest: data_manifest.json
 
 model:
   base_model_name: facebook/esm2_t33_650M_UR50D

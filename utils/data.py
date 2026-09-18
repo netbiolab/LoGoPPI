@@ -9,7 +9,6 @@ runtime module.
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,15 +41,6 @@ class PairExample:
     query_sequence: str
     text_sequence: str
     label: int
-
-
-def sha256_file(path: str | Path, chunk_size: int = 1 << 20) -> str:
-    """Return the SHA256 digest of a file without loading it all into memory."""
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as handle:
-        while chunk := handle.read(chunk_size):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def read_fasta(path: str | Path) -> dict[str, str]:
@@ -205,25 +195,24 @@ class CacheEntry:
 class ProjectionCache:
     """Read-only memory map of concatenated ``[residue,dimension]`` FP16 rows."""
 
-    def __init__(self, cache_dir: str | Path, verify_hashes: bool = True) -> None:
+    def __init__(self, cache_dir: str | Path) -> None:
         self.cache_dir = Path(cache_dir)
         self.manifest = json.loads((self.cache_dir / "cache_manifest.json").read_text())
-        if self.manifest.get("format") != "esm2_ppi_residue_projection_v1":
+        if self.manifest.get("format") != "logoppi_residue_cache_v2":
             raise ValueError("unsupported projection cache format")
         if self.manifest.get("special_tokens") != "excluded":
             raise ValueError("Step 2 requires a residue-only cache")
+        if self.manifest.get("dtype") != "float16":
+            raise ValueError("projection cache dtype must be float16")
         self.dimension = int(self.manifest["projection_dim"])
         self.total_residues = int(self.manifest["total_residues"])
         data_path = self.cache_dir / "residue_projection.fp16"
         index_path = self.cache_dir / "protein_index.csv"
-        if verify_hashes:
-            if (
-                sha256_file(data_path)
-                != self.manifest["files"]["residue_projection.fp16"]
-            ):
-                raise RuntimeError("projection cache SHA256 mismatch")
-            if sha256_file(index_path) != self.manifest["files"]["protein_index.csv"]:
-                raise RuntimeError("projection index SHA256 mismatch")
+        expected_bytes = (
+            self.total_residues * self.dimension * np.dtype(np.float16).itemsize
+        )
+        if data_path.stat().st_size != expected_bytes:
+            raise RuntimeError("projection cache size does not match its metadata")
         self.values = np.memmap(
             data_path,
             mode="r",
@@ -232,10 +221,27 @@ class ProjectionCache:
         )
         self.entries: dict[str, CacheEntry] = {}
         with index_path.open(newline="", encoding="utf-8") as handle:
-            for row in csv.DictReader(handle):
+            reader = csv.DictReader(handle)
+            if reader.fieldnames != ["protein_id", "offset", "length"]:
+                raise ValueError(
+                    "projection index columns must be protein_id,offset,length"
+                )
+            for row in reader:
                 entry = CacheEntry(
                     row["protein_id"], int(row["offset"]), int(row["length"])
                 )
+                if entry.protein_id in self.entries:
+                    raise ValueError(
+                        f"duplicate projection cache ID: {entry.protein_id}"
+                    )
+                if entry.offset < 0 or entry.length <= 0:
+                    raise ValueError(
+                        f"invalid projection cache row: {entry.protein_id}"
+                    )
+                if entry.offset + entry.length > self.total_residues:
+                    raise ValueError(
+                        f"projection cache row exceeds data: {entry.protein_id}"
+                    )
                 self.entries[entry.protein_id] = entry
         if len(self.entries) != int(self.manifest["protein_count"]):
             raise RuntimeError("projection cache protein count mismatch")
@@ -304,31 +310,19 @@ class CachedPairCollator:
 def write_cache_manifest(
     cache_dir: Path,
     *,
-    checkpoint_sha256: str,
-    fasta_sha256: str,
-    data_manifest_sha256: str,
     dimension: int,
     total_residues: int,
     protein_count: int,
 ) -> dict[str, Any]:
-    """Record the cache layout, source hashes, and generated file hashes."""
+    """Record the residue-cache layout needed for safe memory mapping."""
     manifest: dict[str, Any] = {
-        "format": "esm2_ppi_residue_projection_v1",
-        "step1_checkpoint_sha256": checkpoint_sha256,
-        "fasta_sha256": fasta_sha256,
-        "data_manifest_sha256": data_manifest_sha256,
+        "format": "logoppi_residue_cache_v2",
         "projection_dim": dimension,
         "dtype": "float16",
         "max_residues": 800,
         "special_tokens": "excluded",
         "protein_count": protein_count,
         "total_residues": total_residues,
-        "files": {
-            "residue_projection.fp16": sha256_file(
-                cache_dir / "residue_projection.fp16"
-            ),
-            "protein_index.csv": sha256_file(cache_dir / "protein_index.csv"),
-        },
     }
     temporary = cache_dir / "cache_manifest.json.tmp"
     temporary.write_text(json.dumps(manifest, indent=2) + "\n")

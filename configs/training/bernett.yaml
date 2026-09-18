@@ -7,7 +7,6 @@ paths:
   # Selection chooses the checkpoint; calibration fits score parameters.
   validation_selection_csv: ../../data/bernett/validation_selection.csv
   validation_calibration_csv: ../../data/bernett/validation_calibration.csv
-  data_manifest: ../../data/bernett/data_manifest.json
 
 # Architecture shared by training, test, and inference.
 model:

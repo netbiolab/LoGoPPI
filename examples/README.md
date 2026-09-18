@@ -37,9 +37,9 @@ CUDA_VISIBLE_DEVICES=0 python -m scripts.test \
 
 ## Training
 
-The training example contains all required roles and a matching hash manifest.
-Its config uses one GPU and one epoch so that the full workflow can be checked
-with a small input. ESM-2 is still a large model, so a CUDA GPU is required.
+The training example contains all required data roles. Its config uses one GPU
+and one epoch so that the full workflow can be checked with a small input.
+ESM-2 is still a large model, so a CUDA GPU is required.
 
 ```bash
 python -m scripts.training \

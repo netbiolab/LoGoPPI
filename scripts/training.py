@@ -24,6 +24,7 @@ import shutil
 import subprocess
 import sys
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
@@ -57,7 +58,6 @@ from utils.data import (
     ProteinPairDataset,
     TruncatedDistributedTrainSampler,
     read_fasta,
-    sha256_file,
     write_cache_manifest,
 )
 from utils.execution import (
@@ -115,6 +115,9 @@ def main(args: argparse.Namespace) -> None:
         )
     args.config = args.config.resolve()
     config = load_config(args.config)
+    config.setdefault(
+        "model_id", f"logoppi-{config['model_format']}-{uuid.uuid4().hex}"
+    )
     config["paths"] = {
         name: str(resolve_path(args.config, value).resolve())
         for name, value in config["paths"].items()
@@ -566,15 +569,8 @@ def train_model(args: argparse.Namespace, config: dict[str, Any]) -> None:
 def training_preflight(
     config: Mapping[str, Any], config_path: Path, require_all_gpus: bool = True
 ) -> dict[str, Any]:
-    """Verify the staged data, configured GPUs, and requested precision."""
-    manifest_path = resolve_path(config_path, config["paths"]["data_manifest"])
-    if not manifest_path.is_file():
-        raise FileNotFoundError(f"data manifest is missing: {manifest_path}")
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    for entry in manifest["files"].values():
-        path = manifest_path.parent / entry["path"]
-        if sha256_file(path) != entry["sha256"]:
-            raise RuntimeError(f"data hash mismatch: {path}")
+    """Validate public inputs, configured GPUs, and requested precision."""
+    validate_training_inputs(config, config_path)
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is unavailable")
     expected = int(config["runtime"]["expected_world_size"])
@@ -597,11 +593,34 @@ def training_preflight(
         str(config["runtime"]["requested_precision"]),
         bool(config["runtime"]["allow_fp16_fallback"]),
     )
-    return {
-        "data_manifest_sha256": sha256_file(manifest_path),
-        "resolved_precision": precision,
-        "gpu_names": names,
-    }
+    return {"resolved_precision": precision, "gpu_names": names}
+
+
+def validate_training_inputs(config: Mapping[str, Any], config_path: Path) -> None:
+    """Check pair-table structure, labels, and FASTA references."""
+    paths = config["paths"]
+    fasta_path = resolve_path(config_path, paths["fasta"])
+    sequences = read_fasta(fasta_path)
+    for role in (
+        "train_csv",
+        "validation_selection_csv",
+        "validation_calibration_csv",
+    ):
+        pair_path = resolve_path(config_path, paths[role])
+        pairs = read_pair_rows(pair_path)
+        if any(pair.label not in {0, 1} for pair in pairs):
+            raise ValueError(f"labels must be binary: {pair_path}")
+        missing = {
+            protein_id
+            for pair in pairs
+            for protein_id in (pair.query, pair.text)
+            if protein_id not in sequences
+        }
+        if missing:
+            example = sorted(missing)[0]
+            raise KeyError(
+                f"FASTA is missing {len(missing)} pair IDs, including {example}"
+            )
 
 
 def resolve_path(config_path: Path, value: str) -> Path:
@@ -686,6 +705,11 @@ def make_model(config: Mapping[str, Any]) -> ESM2ForPPI:
         exclude_special_tokens=model_cfg["exclude_special_tokens"],
         global_symmetry=model_cfg["global_symmetry"],
         loss_definition=model_cfg["loss_definition"],
+        model_format=config["model_format"],
+        model_id=config.get("model_id"),
+        inference_precision=runtime.get(
+            "resolved_precision", runtime["requested_precision"]
+        ),
     )
     return ESM2ForPPI(architecture)
 
@@ -854,7 +878,7 @@ def score_and_calibrate(
     # Load the shared residue cache and the trained Global head.
     device, rank, world = setup_distributed(timeout_seconds=6 * 3600)
     started = time.monotonic()
-    cache = ProjectionCache(run_dir / "cache", verify_hashes=rank == 0)
+    cache = ProjectionCache(run_dir / "cache")
     pooled = {
         protein_id: torch.from_numpy(cache.get(protein_id).astype(np.float32).mean(0))
         for protein_id in cache.entries
@@ -1181,7 +1205,6 @@ def build_residue_cache(
         local_files_only=bool(config["runtime"].get("local_files_only", False)),
     )
     fasta_path = resolve_path(config_path, config["paths"]["fasta"])
-    manifest_path = resolve_path(config_path, config["paths"]["data_manifest"])
     sequences = read_fasta(fasta_path)
 
     # Allocate one contiguous FP16 file for every residue representation.
@@ -1250,7 +1273,7 @@ def build_residue_cache(
                 f"{min(start + len(rows), len(ordered))}/{len(ordered)} proteins"
             )
 
-    # Atomically publish the completed cache and its provenance manifest.
+    # Atomically publish the completed cache and its layout metadata.
     values.flush()
     del values
     os.replace(
@@ -1259,9 +1282,6 @@ def build_residue_cache(
     os.replace(output / "protein_index.csv.tmp", output / "protein_index.csv")
     write_cache_manifest(
         output,
-        checkpoint_sha256=sha256_file(run_dir / "best.pt"),
-        fasta_sha256=sha256_file(fasta_path),
-        data_manifest_sha256=sha256_file(manifest_path),
         dimension=512,
         total_residues=total,
         protein_count=len(ordered),
@@ -1300,30 +1320,11 @@ def export_bundle(config: Mapping[str, Any], run_dir: Path) -> Path:
     model.save_pretrained(temporary_dir, safe_serialization=True)
     tokenizer.save_pretrained(temporary_dir)
 
-    # Add calibration, resolved settings, and standalone model loading code.
+    # Add calibration and standalone model loading code.
     state_source = run_dir / "calibration" / "scoring_state.json"
     state_target = temporary_dir / "scoring_state.json"
     state_target.write_bytes(state_source.read_bytes())
-    resolved_source = run_dir / "resolved_config.yaml"
-    (temporary_dir / "resolved_config.yaml").write_bytes(resolved_source.read_bytes())
-
-    # Hash every runtime file before the bundle becomes visible.
-    files = sorted((path for path in temporary_dir.iterdir() if path.is_file()))
-    manifest = {
-        "format": "logoppi_v2",
-        "source_checkpoint_sha256": sha256_file(run_dir / "best.pt"),
-        "resolved_precision": payload["resolved_precision"],
-        "scoring": "sigmoid(0.5*global_logit + 0.5*maxsim_logit)",
-        "max_residues": 800,
-        "projection_dim": 512,
-        "cache_dtype": "float16",
-        "global_pooling_dtype": "float32",
-        "maxsim_dtype": "float32",
-        "files": {path.name: sha256_file(path) for path in files},
-    }
-    (temporary_dir / "bundle_manifest.json").write_text(
-        json.dumps(manifest, indent=2) + "\n"
-    )
+    write_model_code(temporary_dir)
 
     # Reload the exported model and require exact tensor equality.
     reloaded = ESM2ForPPI.from_pretrained(temporary_dir).eval()
@@ -1344,7 +1345,6 @@ def load_config(path: Path) -> dict[str, Any]:
         "train_csv",
         "validation_selection_csv",
         "validation_calibration_csv",
-        "data_manifest",
     }
     if set(config.get("paths", {})) != expected_paths:
         raise ValueError(f"paths must contain exactly: {sorted(expected_paths)}")

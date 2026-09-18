@@ -28,6 +28,10 @@ class ESM2PPIConfig(PretrainedConfig):
         # Global symmetry and loss
         global_symmetry: str = "mean_ordered_logits",
         loss_definition: str = "bce_on_mean_ordered_logits",
+        # Public release identity
+        model_format: str | None = None,
+        model_id: str | None = None,
+        inference_precision: str = "bf16",
         **kwargs: object,
     ) -> None:
         kwargs.setdefault("architectures", ["ESM2ForPPI"])
@@ -68,6 +72,12 @@ class ESM2PPIConfig(PretrainedConfig):
                 "loss_definition must be 'bce_on_mean_ordered_logits'"
             )
 
+        if model_format is not None and model_format not in {"x-species", "bernett"}:
+            raise ValueError("model_format must be x-species or bernett")
+
+        if inference_precision not in {"bf16", "fp16", "fp32"}:
+            raise ValueError("inference_precision must be bf16, fp16, or fp32")
+
         # Encoder settings
         self.base_model_name = str(base_model_name)
         self.base_model_revision = base_model_revision
@@ -87,3 +97,8 @@ class ESM2PPIConfig(PretrainedConfig):
         # Global symmetry and loss definition
         self.global_symmetry = global_symmetry
         self.loss_definition = loss_definition
+
+        # Public release identity
+        self.model_format = model_format
+        self.model_id = model_id
+        self.inference_precision = inference_precision

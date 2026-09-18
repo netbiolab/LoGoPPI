@@ -32,7 +32,6 @@ from transformers import AutoTokenizer
 from logobert.esm2_global import ESM2ForPPI, GlobalHead
 from logobert.maxsim import symmetric_maxsim
 from logobert.scoring import _vector, apply_calibration, nll, validate_calibration
-from utils.data import sha256_file
 from utils.execution import autocast_context
 
 
@@ -106,25 +105,12 @@ def read_fasta_any(path: Path) -> dict[str, str]:
     return records
 
 
-def verify_bundle(model_dir: Path) -> dict[str, Any]:
-    """Validate every file listed by a released model bundle."""
-    manifest = json.loads((model_dir / "bundle_manifest.json").read_text())
-    if manifest.get("format") != "logoppi_v2":
-        raise ValueError("unsupported final model bundle")
-    for name, expected in manifest["files"].items():
-        if sha256_file(model_dir / name) != expected:
-            raise RuntimeError(f"bundle SHA256 mismatch: {name}")
-    return manifest
-
-
 class FinalPredictor:
     """Released LoGoPPI model with embedding, scoring, and calibration state."""
 
     def __init__(self, model_dir: Path, device: torch.device) -> None:
-        # Verify the bundle before loading any model objects from it.
         self.model_dir = model_dir
         self.device = device
-        self.manifest = verify_bundle(model_dir)
         self.model = (
             ESM2ForPPI.from_pretrained(model_dir)
             .eval()
@@ -135,7 +121,15 @@ class FinalPredictor:
         self.head = GlobalHead.from_step1_state(self.model.state_dict()).to(device)
         self.state = json.loads((model_dir / "scoring_state.json").read_text())
         validate_calibration(self.state)
-        self.precision = str(self.manifest["resolved_precision"])
+        self.model_format = self.model.config.model_format
+        self.model_id = self.model.config.model_id
+        self.precision = str(self.model.config.inference_precision)
+        if self.model_format not in {"x-species", "bernett"}:
+            raise ValueError("model config must identify x-species or bernett")
+        if not self.model_id:
+            raise ValueError("model config is missing model_id")
+        if self.state["format"] != self.model_format:
+            raise ValueError("model config and scoring state formats differ")
 
     @torch.inference_mode()
     def encode(

@@ -36,39 +36,16 @@ def main(args) -> None:
 
     # Load a compatible cache or embed every requested protein once.
     if args.embeddings_path:
-        cached = torch.load(args.embeddings_path, map_location="cpu", weights_only=True)
-        if cached.get("format") != "logobert_residue_embeddings_v1":
-            raise ValueError(
-                "unsupported embedding cache; regenerate it with this inference.py"
-            )
-        if cached.get("bundle_format") != predictor.manifest["format"]:
-            raise RuntimeError("embedding cache belongs to another model format")
-        if (
-            cached.get("source_checkpoint_sha256")
-            != predictor.manifest["source_checkpoint_sha256"]
-        ):
-            raise RuntimeError("embedding cache belongs to another model checkpoint")
-        embeddings = cached["embeddings"]
+        embeddings = load_embedding_cache(args.embeddings_path, predictor.model_id)
     else:
         embeddings = predictor.encode(sequences, args.embedding_batch_size, args.quiet)
         if args.embedding_save_path:
-            args.embedding_save_path.parent.mkdir(parents=True, exist_ok=True)
-            temporary = args.embedding_save_path.with_suffix(
-                args.embedding_save_path.suffix + ".tmp"
+            save_embedding_cache(
+                args.embedding_save_path,
+                embeddings,
+                predictor.model_id,
+                predictor.model.config.max_residues,
             )
-            torch.save(
-                {
-                    "format": "logobert_residue_embeddings_v1",
-                    "bundle_format": predictor.manifest["format"],
-                    "max_residues": 800,
-                    "source_checkpoint_sha256": predictor.manifest[
-                        "source_checkpoint_sha256"
-                    ],
-                    "embeddings": embeddings,
-                },
-                temporary,
-            )
-            os.replace(temporary, args.embedding_save_path)
 
     if set(sequences).difference(embeddings):
         raise KeyError("embedding cache does not cover all requested proteins")
@@ -128,6 +105,40 @@ def main(args) -> None:
             writer.writerow({key: row[key] for key in fields})
     os.replace(temporary, args.output_path)
     print(f"Saved {len(scores)} predictions to {args.output_path}")
+
+
+def load_embedding_cache(path: Path, model_id: str) -> dict[str, torch.Tensor]:
+    """Load embeddings only when they were created by the selected model."""
+    cached = torch.load(path, map_location="cpu", weights_only=True)
+    if cached.get("format") != "logoppi_residue_embeddings_v2":
+        raise ValueError(
+            "unsupported or legacy embedding cache; regenerate it with this "
+            "version of inference.py"
+        )
+    if cached.get("model_id") != model_id:
+        raise RuntimeError("embedding cache belongs to another model checkpoint")
+    return cached["embeddings"]
+
+
+def save_embedding_cache(
+    path: Path,
+    embeddings: dict[str, torch.Tensor],
+    model_id: str,
+    max_residues: int,
+) -> None:
+    """Save reusable residue embeddings with their public model identity."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    torch.save(
+        {
+            "format": "logoppi_residue_embeddings_v2",
+            "model_id": model_id,
+            "max_residues": int(max_residues),
+            "embeddings": embeddings,
+        },
+        temporary,
+    )
+    os.replace(temporary, path)
 
 
 def read_inputs(
