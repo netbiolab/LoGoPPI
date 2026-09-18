@@ -15,7 +15,7 @@ separately trained models:
 - [LoGoPPI-Bernett](https://huggingface.co/netbiolab/LoGoPPI-Bernett) was
   trained on the
   [Bernett human PPI benchmark](https://doi.org/10.6084/m9.figshare.21591618.v3).
-  It is trained independently and does not load the Cross-species checkpoint.
+
 
 The model weights and exact datasets used in the study are hosted with their
 respective models on Hugging Face.
