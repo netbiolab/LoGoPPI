@@ -151,7 +151,8 @@ python inference.py \
 Cross-species and Bernett use the same training script. Dataset paths and
 training parameters, including batch size, learning rate, number of epochs,
 random seed, GPU settings, and optional W&B logging, can be configured
-separately in `configs/cross_species.yaml` and `configs/bernett.yaml`.
+separately in `configs/training/cross_species.yaml` and
+`configs/training/bernett.yaml`.
 
 ### Quick training example
 
@@ -177,12 +178,12 @@ GPU hardware and the epoch selected by early stopping.
 ```bash
 # Cross-species
 python -m scripts.training \
-  --config configs/cross_species.yaml \
+  --config configs/training/cross_species.yaml \
   --output_dir runs/cross_species
 
 # Bernett
 python -m scripts.training \
-  --config configs/bernett.yaml \
+  --config configs/training/bernett.yaml \
   --output_dir runs/bernett
 ```
 
@@ -192,26 +193,51 @@ and exports `final_model/`. Resume an interrupted run with its last checkpoint:
 
 ```bash
 python -m scripts.training \
-  --config configs/cross_species.yaml \
+  --config configs/training/cross_species.yaml \
   --output_dir runs/cross_species \
   --resume runs/cross_species/last.pt
 ```
 
 ## Test
 
-Evaluate a released model using the test data selected in its config:
+### Quick test example
+
+Run a released Cross-species model on the small synthetic test set:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python -m scripts.test \
-  --config configs/cross_species.yaml \
+  --config examples/test/config.yaml \
   --model_dir models/cross_species \
-  --output_dir runs/test_cross_species
+  --output_dir runs/example_test \
+  --bootstrap_replicates 20
+```
 
+This example verifies the complete test workflow but does not measure
+biologically meaningful performance.
+
+### Full test sets
+
+The Cross-species example below uses taxonomy ID 83332, the smallest released
+Cross-species test set by number of unique proteins (3,414 proteins and 16,775
+pairs). The Bernett config evaluates the complete Bernett test set:
+
+```bash
+# Cross-species model on taxonomy ID 83332
 CUDA_VISIBLE_DEVICES=0 python -m scripts.test \
-  --config configs/bernett.yaml \
+  --config configs/test/cross_species.yaml \
+  --model_dir models/cross_species \
+  --output_dir runs/test_83332
+
+# Bernett
+CUDA_VISIBLE_DEVICES=0 python -m scripts.test \
+  --config configs/test/bernett.yaml \
   --model_dir models/bernett \
   --output_dir runs/test_bernett
 ```
+
+To evaluate another released Cross-species dataset, change `fasta` and
+`test_csv` in `configs/test/cross_species.yaml` to the matching files under
+`data/test/`.
 
 Testing uses the calibration stored with the released model. Test labels are
 used only to calculate evaluation metrics and are never used to refit

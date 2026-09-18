@@ -16,10 +16,6 @@
     "validation_calibration.csv": {
       "path": "validation_calibration.csv",
       "sha256": "bb3b9fd365a01ec822a3ad455d445c8194c9f06358f9697d3d3c2c83db4e1ffa"
-    },
-    "test.csv": {
-      "path": "test.csv",
-      "sha256": "da8d7de0ed0b5dc58b6d2efac97d64780cab39603db1799ab747f37de07d98fe"
     }
   }
 }

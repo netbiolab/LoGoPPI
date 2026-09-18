@@ -2,13 +2,12 @@ model_format: x-species
 
 # Every pair CSV uses query,text,label. Query and text are FASTA protein IDs.
 paths:
-  fasta: ../data/proteins.fasta
-  train_csv: ../data/human_train_clean.csv
+  fasta: ../../data/proteins.fasta
+  train_csv: ../../data/human_train_clean.csv
   # Selection chooses the checkpoint; calibration fits score parameters.
-  validation_selection_csv: ../data/human_validation_selection.csv
-  validation_calibration_csv: ../data/human_validation_calibration.csv
-  test_csv: ../data/test/mouse_pairs.csv
-  data_manifest: ../data/data_manifest.json
+  validation_selection_csv: ../../data/human_validation_selection.csv
+  validation_calibration_csv: ../../data/human_validation_calibration.csv
+  data_manifest: ../../data/data_manifest.json
 
 # Architecture shared by training, test, and inference.
 model:

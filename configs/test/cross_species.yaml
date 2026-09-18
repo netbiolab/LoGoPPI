@@ -1,0 +1,12 @@
+model_format: x-species
+
+# Taxonomy ID 83332 has the fewest unique proteins among the eight released
+# Cross-species test sets. Query and text are protein IDs in this FASTA file.
+paths:
+  fasta: ../../data/test/83332.fasta
+  test_csv: ../../data/test/83332_pairs.csv
+
+postprocess:
+  embedding_batch_size: 32
+  global_batch_size: 4096
+  maxsim_pair_batch_size: 32

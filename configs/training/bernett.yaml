@@ -2,13 +2,12 @@ model_format: bernett
 
 # Every pair CSV uses query,text,label. Query and text are FASTA protein IDs.
 paths:
-  fasta: ../data/bernett/proteins.fasta
-  train_csv: ../data/bernett/train.csv
+  fasta: ../../data/bernett/proteins.fasta
+  train_csv: ../../data/bernett/train.csv
   # Selection chooses the checkpoint; calibration fits score parameters.
-  validation_selection_csv: ../data/bernett/validation_selection.csv
-  validation_calibration_csv: ../data/bernett/validation_calibration.csv
-  test_csv: ../data/bernett/test.csv
-  data_manifest: ../data/bernett/data_manifest.json
+  validation_selection_csv: ../../data/bernett/validation_selection.csv
+  validation_calibration_csv: ../../data/bernett/validation_calibration.csv
+  data_manifest: ../../data/bernett/data_manifest.json
 
 # Architecture shared by training, test, and inference.
 model:

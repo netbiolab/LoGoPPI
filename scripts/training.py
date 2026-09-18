@@ -1344,7 +1344,6 @@ def load_config(path: Path) -> dict[str, Any]:
         "train_csv",
         "validation_selection_csv",
         "validation_calibration_csv",
-        "test_csv",
         "data_manifest",
     }
     if set(config.get("paths", {})) != expected_paths:

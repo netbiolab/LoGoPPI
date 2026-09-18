@@ -1,0 +1,12 @@
+model_format: bernett
+
+# Query and text are protein IDs in this FASTA file. The released Bernett
+# test set contains 52,048 labeled protein pairs.
+paths:
+  fasta: ../../data/bernett/proteins.fasta
+  test_csv: ../../data/bernett/test.csv
+
+postprocess:
+  embedding_batch_size: 32
+  global_batch_size: 4096
+  maxsim_pair_batch_size: 32
