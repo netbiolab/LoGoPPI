@@ -239,16 +239,8 @@ To evaluate another released Cross-species dataset, change `fasta` and
 `test_csv` in `configs/test/cross_species.yaml` to the matching files under
 `data/test/`.
 
-Testing uses the calibration stored with the released model. Test labels are
-used only to calculate evaluation metrics and are never used to refit
-calibration.
 
-## Examples
 
-Small synthetic inputs and commands for inference, testing, and the complete
-training workflow are provided in [`examples/`](examples/README.md). They are
-intended to verify the input format and execution flow, not biological model
-performance.
 
 ## Acknowledgements
 
