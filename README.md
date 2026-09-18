@@ -148,15 +148,39 @@ python inference.py \
 
 ## Training
 
-Cross-species and Bernett use the same training script. 
-Dataset paths and training parameters, including batch size, learning rate, number of epochs, random seed, GPU settings, and optional W&B logging, 
-can be configured separately in configs/cross_species.yaml and configs/bernett.yaml.
+Cross-species and Bernett use the same training script. Dataset paths and
+training parameters, including batch size, learning rate, number of epochs,
+random seed, GPU settings, and optional W&B logging, can be configured
+separately in `configs/cross_species.yaml` and `configs/bernett.yaml`.
+
+### Quick training example
+
+Run the complete workflow on a small synthetic dataset with one GPU and one
+epoch. This example checks training, validation, cache generation, calibration,
+and model export; it is not intended to produce a biologically useful model.
 
 ```bash
+python -m scripts.training \
+  --config examples/training/config.yaml \
+  --output_dir runs/example_training
+```
+
+The example still loads the ESM-2 650M model and therefore requires a CUDA GPU.
+The first run may also need time to download the base model.
+
+### Full training
+
+The release configurations use the complete datasets, up to 20 epochs, and
+three GPUs by default. They are long-running jobs; actual time depends on the
+GPU hardware and the epoch selected by early stopping.
+
+```bash
+# Cross-species
 python -m scripts.training \
   --config configs/cross_species.yaml \
   --output_dir runs/cross_species
 
+# Bernett
 python -m scripts.training \
   --config configs/bernett.yaml \
   --output_dir runs/bernett
