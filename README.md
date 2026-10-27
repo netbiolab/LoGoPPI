@@ -241,4 +241,4 @@ To evaluate another released Cross-species dataset, change `fasta` and
 
 ## License
 
-LoGoPPI is released under the CC-BY-4.0 license.
+LoGoPPI is released under the Apache-2.0 license.
