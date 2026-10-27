@@ -1,4 +1,4 @@
-# 🧩LoGoPPI
+# 🧩 LoGoPPI
 [![Paper](https://img.shields.io/badge/Paper-bioRxiv-B31B1B)](https://www.biorxiv.org/content/10.64898/2026.09.20.753039v1)
 [![Model](https://img.shields.io/badge/Model-%F0%9F%A4%97%20Hugging%20Face-blue)](https://huggingface.co/netbiolab/LoGoPPI-Cross-species)
 
@@ -23,7 +23,7 @@ The model weights and exact datasets used in the study are hosted with their
 respective models on [Hugging Face](https://huggingface.co/netbiolab/LoGoPPI-Cross-species).
 
 
-## Installation
+## ⚙️ Installation
 
 ```bash
 git clone https://github.com/netbiolab/LoGoPPI.git
@@ -36,7 +36,7 @@ The provided environment targets Linux with an NVIDIA GPU and CUDA-enabled
 PyTorch. An NVIDIA driver must already be installed on the system. Run the
 commands below after activating the `logoppi` environment.
 
-## Model and data download
+## 📥 Model and data download
 
 For inference, download a model without its training and evaluation data:
 
@@ -79,7 +79,7 @@ snapshot_download(
 PY
 ```
 
-## Input format
+## 🧬 Input format
 
 FASTA headers must match the protein IDs in the pair CSV:
 
@@ -108,7 +108,7 @@ P12345,Q88888,0
 
 `query` and `text` contain FASTA IDs rather than protein sequences.
 
-## Inference
+## 🔮 Inference
 
 Score pairs using a FASTA file:
 
@@ -149,7 +149,7 @@ python inference.py \
   --output_path predictions.csv --gpus 0
 ```
 
-## Training
+## 🏋️ Training
 
 Cross-species and Bernett use the same training script. Dataset paths and
 training parameters, including batch size, learning rate, number of epochs,
@@ -157,7 +157,7 @@ random seed, GPU settings, and optional W&B logging, can be configured
 separately in `configs/training/cross_species.yaml` and
 `configs/training/bernett.yaml`.
 
-### Quick training example
+### ⚡ Quick training example
 
 Run the complete workflow on a small synthetic dataset with one GPU and one
 epoch. This example checks training, validation, cache generation, calibration,
@@ -172,7 +172,7 @@ python -m scripts.training \
 The example still loads the ESM-2 650M model and therefore requires a CUDA GPU.
 The first run may also need time to download the base model.
 
-### Full training
+### 🏋️ Full training
 
 The release configurations use the complete datasets, up to 20 epochs, and
 three GPUs by default. They are long-running jobs; actual time depends on the
@@ -201,9 +201,9 @@ python -m scripts.training \
   --resume runs/cross_species/last.pt
 ```
 
-## Test
+## 🧪 Test
 
-### Quick test example
+### ⚡ Quick test example
 
 Run a released Cross-species model on the small synthetic test set:
 
@@ -218,7 +218,7 @@ CUDA_VISIBLE_DEVICES=0 python -m scripts.test \
 This example verifies the complete test workflow but does not measure
 biologically meaningful performance.
 
-### Full test sets
+### 📊 Full test sets
 
 The Cross-species example below uses taxonomy ID 83332, the smallest released
 Cross-species test set by number of unique proteins (3,414 proteins and 16,775
@@ -242,6 +242,6 @@ To evaluate another released Cross-species dataset, change `fasta` and
 `test_csv` in `configs/test/cross_species.yaml` to the matching files under
 `data/test/`.
 
-## License
+## 📄 License
 
 LoGoPPI is released under the Apache-2.0 license.
