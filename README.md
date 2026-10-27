@@ -1,4 +1,4 @@
-# LoGoPPI
+# 🧩LoGoPPI
 [![Paper](https://img.shields.io/badge/Paper-bioRxiv-B31B1B)](https://www.biorxiv.org/content/10.64898/2026.09.20.753039v1)
 [![Model](https://img.shields.io/badge/Model-%F0%9F%A4%97%20Hugging%20Face-blue)](https://huggingface.co/netbiolab/LoGoPPI-Cross-species)
 
