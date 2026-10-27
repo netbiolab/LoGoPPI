@@ -1,7 +1,8 @@
+# LoGoPPI
 [![Paper](https://img.shields.io/badge/Paper-bioRxiv-B31B1B)](https://www.biorxiv.org/content/10.64898/2026.09.20.753039v1)
 [![Model](https://img.shields.io/badge/Model-%F0%9F%A4%97%20Hugging%20Face-blue)](https://huggingface.co/netbiolab/LoGoPPI-Cross-species)
-# LoGoPPI
-
+[![Paper](https://img.shields.io/badge/Paper-bioRxiv-8B5CF6)](https://www.biorxiv.org/content/10.64898/2026.09.20.753039v1)
+[![Model](https://img.shields.io/badge/Model-%F0%9F%A4%97%20Hugging%20Face-F59E0B)](https://huggingface.co/netbiolab/LoGoPPI-Cross-species)
 LoGoPPI is a protein–protein interaction (PPI) prediction model built on an
 ESM-2 protein language model. It combines a sequence-level Global classifier
 with residue-level Maxsim scoring. Each protein is embedded once, so its
