@@ -18,7 +18,8 @@ separately trained models:
 
 
 The model weights and exact datasets used in the study are hosted with their
-respective models on Hugging Face.
+respective models on [Hugging Face](https://huggingface.co/netbiolab/LoGoPPI-Cross-species).
+
 
 ## Installation
 
